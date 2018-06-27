@@ -1,0 +1,1 @@
+CREATE DATABASE cmk_ns
