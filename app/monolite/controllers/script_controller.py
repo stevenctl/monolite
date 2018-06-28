@@ -1,7 +1,7 @@
 from flask import jsonify, Request
 from sqlalchemy.orm.session import Session
 from typing import Callable
-from web.models import CheckScript
+from ..models import CheckScript
 
 
 class ScriptController:

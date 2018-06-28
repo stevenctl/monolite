@@ -4,11 +4,11 @@ FROM python:3.6
 EXPOSE 5000
 
 # Add our application to the image
-COPY ../ /opt/cmk_ns
-WORKDIR /opt/cmk_ns
+COPY ./ /opt/app
+WORKDIR /opt/app
 
 # Install python dependencies
-RUN pip install -r /opt/cmk_ns/requirements.txt
+RUN pip install -r /opt/app/requirements.txt
 
 # Start the app
-CMD python3 checkmk_not_shitty.py
+CMD python3 app.py

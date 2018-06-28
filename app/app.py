@@ -1,15 +1,14 @@
 import sys
 from flask import \
     Flask, \
-    request, \
-    jsonify
-from pymysql import OperationalError
+    request
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 import pymysql
-from .models import Base
-from .config import Config
-from .controllers import ScriptController
+from monolite.models import Base
+from monolite.util import Config
+from monolite.controllers import ScriptController
 import time
 
 # Hack for mysql and python3
@@ -36,17 +35,17 @@ db_port = ":%s" % config.get_value('db_port') if config.get_value('db_port') els
 db_url = "%s://%s:%s@%s%s/%s" % (db_driver, db_user, db_pass, db_host, db_port, db_name)
 
 
-def initialize_db(attempt=0, max_retires=10, delay=1):
+def initialize_db(db_url, attempt=0, max_retires=10, delay=1):
     try:
-        engine = create_engine(db_url)
-        Session = sessionmaker(bind=db_engine)
         print("Connecting to %s (attempt %s)" % (db_url, attempt + 1))
-        Base.metadata.create_all(db_engine)
-        return engine, Session
-    except Exception as e:
+        engine = create_engine(db_url)
+        session_class = sessionmaker(bind=engine)
+        Base.metadata.create_all(engine)
+        return engine, session_class
+    except SQLAlchemyError as e:
         if attempt < max_retires:
             time.sleep(delay)
-            initialize_db(engine, attempt + 1, max_retires)
+            initialize_db(db_url, attempt + 1, max_retires, delay)
         else:
             raise e
 
@@ -66,6 +65,6 @@ script_controller = ScriptController(session_factory)
 
 @app.route('/scripts', methods=['GET', 'POST'])
 def scripts():
-    getattr(script_controller, request.method.lower())(request)
+    return getattr(script_controller, request.method.lower())(request)
 
-app.run()
+app.run(host='0.0.0.0')
